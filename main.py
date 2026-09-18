@@ -231,7 +231,6 @@ st.markdown("---")
 # Section 7: 제작 국가 -> 장르 선버스트 그래프
 st.header("7. 국가 및 장르별 영화 편수 비율 (선버스트)")
 
-# 데이터 전처리: 국가 및 장르별 빈도수 집계 후 그려 오류 방지
 sunburst_df = df.groupby(["nation", "genre"]).size().reset_index(name="count")
 
 fig_sunburst = px.sunburst(
@@ -252,6 +251,36 @@ st.plotly_chart(fig_sunburst, use_container_width=True)
 st.subheader("💡 이 그래프로 알 수 있는 것")
 st.write(
     "한국, 미국 등 주요 제작 국가별로 박스오피스 상위권에 주력 진출하는 장르의 구성 비중이 어떻게 다른지 직관적으로 비교할 수 있습니다."
+)
+
+st.markdown("---")
+
+# Section 8: 질문 기반 산점도 그래프
+st.header("8. 관객수 만큼 음식매점에 판매율은 어떻게 다른가")
+
+fig_q8 = px.scatter(
+    df,
+    x="days_in_top10",
+    y="total_audi",
+    color="genre",
+    hover_name="movieNm",
+    title="관객수 만큼 음식매점에 판매율은 어떻게 다른가",
+    labels={
+        "days_in_top10": "10위권에 머문 간식",
+        "total_audi": "총 관객 수(명)",
+        "genre": "장르",
+    },
+)
+
+fig_q8.update_traces(
+    hovertemplate="<b>영화명: %{hovertext}</b><br>10위권에 머문 간식: %{x}<br>총 관객 수: %{y:,.0f}명"
+)
+
+st.plotly_chart(fig_q8, use_container_width=True)
+
+st.subheader("💡 이 그래프로 알 수 있는 것")
+st.write(
+    "10위권 순위에 장기 체류하며 총 관객 수가 많은 영화일수록 극장 매점 소비 인원이 지속적으로 유입되어 매점 판매율 증가로 이어질 가능성이 높음을 알 수 있습니다."
 )
 
 st.markdown("---")
