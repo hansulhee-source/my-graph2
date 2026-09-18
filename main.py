@@ -13,15 +13,22 @@ def load_data():
     url = "https://raw.githubusercontent.com/greatsong/modudata/main/data/kobis_movies.csv"
     df = pd.read_csv(url)
 
-    # 개봉일(openDt)을 datetime 형태로 변환
-    df["openDt"] = pd.to_datetime(df["openDt"].astype(str), format="%Y%m%d")
+    # 개봉일(openDt) 변환 (오류 방지를 위해 errors='coerce' 처리)
+    df["openDt"] = pd.to_datetime(df["openDt"].astype(str), format="%Y%m%d", errors="coerce")
 
-    # genre: 세로막대 기호(|)로 구분된 여러 장르 중 첫 번째 장르만 추출
+    # genre: 결측치 처리 및 첫 번째 장르만 추출
     df["genre"] = df["genre"].fillna("미상").astype(str)
-    df["genre"] = df["genre"].apply(lambda x: x.split("|")[0].strip())
+    df["genre"] = df["genre"].apply(lambda x: x.split("|")[0].strip() if x else "미상")
 
-    # nation: 결측치 처리
-    df["nation"] = df["nation"].fillna("미상").astype(str)
+    # nation: 결측치 및 공백 처리
+    df["nation"] = df["nation"].fillna("미상").astype(str).str.strip()
+    df["nation"] = df["nation"].replace("", "미상")
+
+    # 수치형 컬럼 결측치 0 채움
+    num_cols = ["first_scrn", "first_show", "first_week_audi", "total_audi", "days_in_top10"]
+    for col in num_cols:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
     return df
 
@@ -37,8 +44,9 @@ st.markdown("---")
 st.header("1. 장르별 영화 분포")
 
 genre_counts = (
-    df["genre"].value_counts().reset_index(name="count").rename(columns={"index": "genre"})
+    df["genre"].value_counts().reset_index()
 )
+genre_counts.columns = ["genre", "count"]
 
 fig_genre = px.pie(
     genre_counts,
@@ -110,7 +118,7 @@ fig_hist.update_layout(
 
 st.plotly_chart(fig_hist, use_container_width=True)
 
-# 최다 관객 영화 정보 데이터 자동 추출
+# 최다 관객 영화 정보 데이터 추출
 top_movie = df.loc[df["total_audi"].idxmax()]
 top_movie_name = top_movie["movieNm"]
 top_movie_audi = top_movie["total_audi"]
@@ -156,7 +164,6 @@ st.markdown("---")
 # Section 5: 주요 장르별 총 관객 수 상자 그림 (박스플롯)
 st.header("5. 주요 장르별 관객 수 분포")
 
-# 영화가 10편 이상인 장르 추출 및 필터링
 genre_counts_series = df["genre"].value_counts()
 major_genres = genre_counts_series[genre_counts_series >= 10].index
 df_box = df[df["genre"].isin(major_genres)]
@@ -186,7 +193,7 @@ st.write(
 st.markdown("---")
 
 # Section 6: 스크린수 vs 총 관객 수 vs 개봉 첫 주 관객 (버블 차트)
-st.header("6. 개봉 첫 주 관객을 가미한 버블 그래프")[cite: 1]
+st.header("6. 개봉 첫 주 관객을 가미한 버블 그래프")
 
 fig_bubble = px.scatter(
     df,
@@ -196,29 +203,27 @@ fig_bubble = px.scatter(
     color="genre",
     hover_name="movieNm",
     size_max=40,
-    title="개봉일 스크린수 vs 총 관객 수 (버블: 첫 주 관객)",[cite: 1]
+    title="개봉일 스크린수 vs 총 관객 수 (버블: 첫 주 관객)",
     labels={
-        "first_scrn": "개봉일 스크린수(개)",[cite: 1]
-        "total_audi": "총 관객 수(명)",[cite: 1]
+        "first_scrn": "개봉일 스크린수(개)",
+        "total_audi": "총 관객 수(명)",
         "first_week_audi": "개봉 첫 주 관객(명)",
-        "genre": "장르",[cite: 1]
+        "genre": "장르",
     },
 )
 
 fig_bubble.update_traces(
     hovertemplate="<b>영화명: %{hovertext}</b><br>"
-    "장르: %{customdata[0]}<br>"
     "개봉일 스크린수: %{x:,.0f}개<br>"
     "총 관객 수: %{y:,.0f}명<br>"
-    "개봉 첫 주 관객: %{marker.size:,.0f}명",[cite: 1]
-    customdata=df[["genre"]],
+    "개봉 첫 주 관객: %{marker.size:,.0f}명"
 )
 
 st.plotly_chart(fig_bubble, use_container_width=True)
 
-st.subheader("💡 이 그래프로 알 수 있는 것")[cite: 1]
+st.subheader("💡 이 그래프로 알 수 있는 것")
 st.write(
-    "대다수 흥행작은 개봉 첫 주 관객이 많고 스크린수가 넓게 확보될수록 최종 관객 수도 증가하는 양(+)의 상관관계를 보이나, 일부는 스크린수에 비해 높은 주차 관객이나 입소문으로 독특한 분포를 보이기도 합니다."[cite: 1]
+    "대다수 흥행작은 개봉 첫 주 관객이 많고 스크린수가 넓게 확보될수록 최종 관객 수도 증가하는 양(+)의 상관관계를 보이나, 일부는 스크린수에 비해 높은 주차 관객이나 입소문으로 독특한 분포를 보이기도 합니다."
 )
 
 st.markdown("---")
@@ -226,17 +231,19 @@ st.markdown("---")
 # Section 7: 제작 국가 -> 장르 선버스트 그래프
 st.header("7. 국가 및 장르별 영화 편수 비율 (선버스트)")
 
-# 선버스트 그래프 생성 (path=[nation, genre])
+# 데이터 전처리: 국가 및 장르별 빈도수 집계 후 그려 오류 방지
+sunburst_df = df.groupby(["nation", "genre"]).size().reset_index(name="count")
+
 fig_sunburst = px.sunburst(
-    df,
+    sunburst_df,
     path=["nation", "genre"],
+    values="count",
     title="제작 국가 및 장르별 영화 편수 선버스트 차트",
     color="nation",
 )
 
-# 툴팁(마우스 오버) 설정
 fig_sunburst.update_traces(
-    hovertemplate="<b>분류: %{label}</b><br>영화 편수: %{value}편<br>비율: %{percentEntry:.1%}",
+    hovertemplate="<b>분류: %{label}</b><br>영화 편수: %{value}편",
     textinfo="label+value",
 )
 
