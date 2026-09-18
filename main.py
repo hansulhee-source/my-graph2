@@ -153,7 +153,6 @@ st.markdown("---")
 # Section 5: 주요 장르별 총 관객 수 상자 그림 (박스플롯)
 st.header("5. 주요 장르별 관객 수 분포")
 
-# 영화가 10편 이상인 장르 추출 및 필터링
 genre_counts_series = df["genre"].value_counts()
 major_genres = genre_counts_series[genre_counts_series >= 10].index
 df_box = df[df["genre"].isin(major_genres)]
@@ -183,9 +182,8 @@ st.write(
 st.markdown("---")
 
 # Section 6: 스크린수 vs 총 관객 수 vs 개봉 첫 주 관객 (버블 차트)
-st.header("6. 개봉 첫 주 관객을 가미한 버블 그래프")[cite: 1]
+st.header("6. 개봉 첫 주 관객을 가미한 버블 그래프")
 
-# 버블 차트 생성 (size에 first_week_audi 설정)
 fig_bubble = px.scatter(
     df,
     x="first_scrn",
@@ -193,31 +191,27 @@ fig_bubble = px.scatter(
     size="first_week_audi",
     color="genre",
     hover_name="movieNm",
-    size_max=40,
-    title="개봉일 스크린수 vs 총 관객 수 (버블: 첫 주 관객)",[cite: 1]
-    labels={
-        "first_scrn": "개봉일 스크린수(개)",[cite: 1]
-        "total_audi": "총 관객 수(명)",[cite: 1]
-        "first_week_audi": "개봉 첫 주 관객(명)",
-        "genre": "장르",[cite: 1]
+    hover_data={
+        "genre": True,
+        "first_scrn": ":,.0f",
+        "total_audi": ":,.0f",
+        "first_week_audi": ":,.0f",
     },
-)
-
-# 툴팁(마우스 오버) 설정: 첫 주 관객 포함
-fig_bubble.update_traces(
-    hovertemplate="<b>영화명: %{hovertext}</b><br>"
-    "장르: %{customdata[0]}<br>"
-    "개봉일 스크린수: %{x:,.0f}개<br>"
-    "총 관객 수: %{y:,.0f}명<br>"
-    "개봉 첫 주 관객: %{marker.size:,.0f}명",[cite: 1]
-    customdata=df[["genre"]],
+    size_max=40,
+    title="개봉일 스크린수 vs 총 관객 수 (버블: 첫 주 관객)",
+    labels={
+        "first_scrn": "개봉일 스크린수(개)",
+        "total_audi": "총 관객 수(명)",
+        "first_week_audi": "개봉 첫 주 관객(명)",
+        "genre": "장르",
+    },
 )
 
 st.plotly_chart(fig_bubble, use_container_width=True)
 
-st.subheader("💡 이 그래프로 알 수 있는 것")[cite: 1]
+st.subheader("💡 이 그래프로 알 수 있는 것")
 st.write(
-    "대다수 흥행작은 개봉 첫 주 관객이 많고 스크린수가 넓게 확보될수록 최종 관객 수도 증가하는 양(+)의 상관관계를 보이나, 일부는 스크린수에 비해 높은 주차 관객이나 입소문으로 독특한 분포를 보이기도 합니다."[cite: 1]
+    "대다수 흥행작은 개봉 첫 주 관객이 많고 스크린수가 넓게 확보될수록 최종 관객 수도 증가하는 양(+)의 상관관계를 보이나, 일부는 스크린수에 비해 높은 주차 관객이나 입소문으로 독특한 분포를 보이기도 합니다."
 )
 
 st.markdown("---")
