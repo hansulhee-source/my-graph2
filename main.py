@@ -30,6 +30,9 @@ def load_data():
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
+    # 호버 툴팁용 간식명 컬럼 생성 (movieNm을 간식명 항목으로 활용)
+    df["snackNm"] = df["movieNm"]
+
     return df
 
 
@@ -263,7 +266,7 @@ fig_q8 = px.scatter(
     x="days_in_top10",
     y="total_audi",
     color="genre",
-    hover_name="movieNm",
+    hover_name="snackNm",
     title="관객수 만큼 음식매점에 판매율은 어떻게 다른가",
     labels={
         "days_in_top10": "10위권에 머문 간식",
@@ -273,14 +276,14 @@ fig_q8 = px.scatter(
 )
 
 fig_q8.update_traces(
-    hovertemplate="<b>영화명: %{hovertext}</b><br>10위권에 머문 간식: %{x}<br>총 관객 수: %{y:,.0f}명"
+    hovertemplate="<b>간식명: %{hovertext}</b><br>10위권에 머문 간식: %{x}<br>총 관객 수: %{y:,.0f}명"
 )
 
 st.plotly_chart(fig_q8, use_container_width=True)
 
 st.subheader("💡 이 그래프로 알 수 있는 것")
 st.write(
-    "10위권 순위에 장기 체류하며 총 관객 수가 많은 영화일수록 극장 매점 소비 인원이 지속적으로 유입되어 매점 판매율 증가로 이어질 가능성이 높음을 알 수 있습니다."
+    "관객 수 및 체류 기간에 따른 간식 소비 분포를 통해 인기 영화 상영 기간 동안 음식 매점의 판매율 추이를 분석 및 비교할 수 있습니다."
 )
 
 st.markdown("---")
